@@ -13,12 +13,13 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer sprite;
-    private PlayerController playerController; // Inisialisasi PlayerInputActions
+    private PlayerController playerController;
 
     private Vector2 moveInput;
+    private float mobileInputX = 0f;
     private bool isJumping = false;
 
-    private enum MovementState { idle, walk, jump, run, landing }
+    private enum MovementState { idle, walk, run, jump, landing }
 
     [Header("Jump Settings")]
     [SerializeField] private LayerMask jumpableGround;
@@ -31,7 +32,7 @@ public class PlayerMovement : MonoBehaviour
         sprite = GetComponent<SpriteRenderer>();
         coll = GetComponent<BoxCollider2D>();
 
-        playerController = new PlayerController(); // Inisialisasi PlayerInputActions
+        playerController = new PlayerController();
     }
 
     private void OnEnable()
@@ -51,41 +52,58 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        moveInput = playerController.Movement.Move.ReadValue<Vector2>();
+        if (Application.isMobilePlatform)
+        {
+            moveInput = new Vector2(mobileInputX, 0f);
+        }
+        else
+        {
+            moveInput = playerController.Movement.Move.ReadValue<Vector2>();
+        }
     }
 
     private void FixedUpdate()
     {
-        Vector2 targetVelocity = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
+        float totalInputX = moveInput.x + mobileInputX;
+        Vector2 targetVelocity = new Vector2(totalInputX * moveSpeed, rb.velocity.y);
         rb.velocity = targetVelocity;
-        UpdateAnimation();
+
+        UpdateAnimation(totalInputX);
+
+        if (isGrounded() && Mathf.Abs(rb.velocity.y) < 0.01f)
+        {
+            isJumping = false;
+        }
     }
 
-    private void UpdateAnimation()
+    private void UpdateAnimation(float inputX)
     {
         MovementState state;
 
-        // Update walk/run state
-        if (moveInput.x != 0f)
+        if (inputX > 0f)
         {
             state = MovementState.walk;
-            sprite.flipX = moveInput.x < 0f;
+            sprite.flipX = false;
+        }
+        else if (inputX < 0f)
+        {
+            state = MovementState.walk;
+            sprite.flipX = true;
         }
         else
         {
             state = MovementState.idle;
         }
 
-        // Update jump state
         if (rb.velocity.y > 0.1f)
         {
             state = MovementState.jump;
         }
-        else if (rb.velocity.y < -0.1f && !isGrounded()) // checking falling
+        else if (rb.velocity.y < -0.1f && !isGrounded())
         {
             state = MovementState.landing;
         }
-        else if (isGrounded()) // character is grounded
+        else if (isGrounded() && Mathf.Abs(rb.velocity.y) < 0.01f && state != MovementState.walk)
         {
             state = MovementState.landing;
         }
@@ -98,11 +116,36 @@ public class PlayerMovement : MonoBehaviour
         if (isGrounded())
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            isJumping = true;
         }
     }
 
     private bool isGrounded()
     {
         return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, 0.1f, jumpableGround);
+    }
+
+    public void MoveRight(bool isPressed)
+    {
+        if (isPressed)
+            mobileInputX = 1f;
+        else if (mobileInputX == 1f)
+            mobileInputX = 0f;
+    }
+
+    public void MoveLeft(bool isPressed)
+    {
+        if (isPressed)
+            mobileInputX = -1f;
+        else if (mobileInputX == -1f)
+            mobileInputX = 0f;
+    }
+
+    public void MobileJump()
+    {
+        if (isGrounded())
+        {
+            Jump();
+        }
     }
 }
