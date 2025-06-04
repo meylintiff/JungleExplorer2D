@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -25,6 +26,19 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask jumpableGround;
     private BoxCollider2D coll;
 
+    [Header("Health System")]
+    public int maxHealth = 100;
+    private int currentHealth;
+    public TextMeshProUGUI healthText;
+
+    [Header("Knockback Settings")]
+    [SerializeField] private float knockBackTime = 0.2f;
+    [SerializeField] private float knockBackThrust = 10f;
+
+    private bool isKnockedBack = false;
+
+    private Vector3 startPosition;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -33,6 +47,11 @@ public class PlayerMovement : MonoBehaviour
         coll = GetComponent<BoxCollider2D>();
 
         playerController = new PlayerController();
+
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+
+        startPosition = transform.position; // Simpan posisi awal player
     }
 
     private void OnEnable()
@@ -64,6 +83,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isKnockedBack) return;
+
         float totalInputX = moveInput.x + mobileInputX;
         Vector2 targetVelocity = new Vector2(totalInputX * moveSpeed, rb.velocity.y);
         rb.velocity = targetVelocity;
@@ -147,5 +168,43 @@ public class PlayerMovement : MonoBehaviour
         {
             Jump();
         }
+    }
+
+    private void UpdateHealthUI()
+    {
+        if (healthText != null)
+            healthText.text = "Health: " + currentHealth;
+    }
+
+    public void TakeDamage(int damage, Vector2 direction)
+    {
+        if (isKnockedBack) return;
+
+        currentHealth -= damage;
+
+        if (currentHealth <= 0)
+        {
+            currentHealth = maxHealth; // Reset nyawa
+            transform.position = startPosition; // Respawn ke posisi awal
+            rb.velocity = Vector2.zero; // Hentikan gerakan
+            UpdateHealthUI();
+            return;
+        }
+
+        StartCoroutine(HandleKnockback(direction.normalized));
+        UpdateHealthUI();
+    }
+
+    private IEnumerator HandleKnockback(Vector2 direction)
+    {
+        isKnockedBack = true;
+        rb.velocity = Vector2.zero;
+
+        Vector2 force = direction * knockBackThrust * rb.mass;
+        rb.AddForce(force, ForceMode2D.Impulse);
+
+        yield return new WaitForSeconds(knockBackTime);
+        rb.velocity = Vector2.zero;
+        isKnockedBack = false;
     }
 }

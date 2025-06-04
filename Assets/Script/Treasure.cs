@@ -1,15 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Treasure : MonoBehaviour
 {
-    private void OnTriggerEnter2D(Collider2D other)
+    public GameObject winPanel;
+
+    void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log("Selamat! Kamu menemukan harta karun!");
+            // Cek apakah semua koin sudah dikumpulkan
+            if (PoinController.instance.SemuaKoinTerkumpul())
+            {
+                winPanel.SetActive(true); // Tampilkan panel menang
+                Time.timeScale = 0f;      // Pause game
+            }
+            else
+            {
+                Debug.Log("Kumpulkan semua koin dulu!");
+            }
         }
     }
 }
-
