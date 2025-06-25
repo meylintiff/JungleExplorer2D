@@ -29,7 +29,7 @@ public class PoinController : MonoBehaviour
 
     void UpdateUI()
     {
-        scoreText.text = "Poin: " + poin + " / " + totalKoin;
+        scoreText.text = poin + " / " + totalKoin;
     }
 
     public bool SemuaKoinTerkumpul()

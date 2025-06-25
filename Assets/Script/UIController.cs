@@ -13,7 +13,13 @@ public class UIController : MonoBehaviour
 
     public void NextLevel()
     {
-        Time.timeScale = 1f; // Lanjutkan waktu
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1); // Load scene berikutnya
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    public void Home()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("mainmenu"); // Ganti "MainMenu" sesuai nama scene kamu
     }
 }

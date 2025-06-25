@@ -79,6 +79,13 @@ public class PlayerMovement : MonoBehaviour
         {
             moveInput = playerController.Movement.Move.ReadValue<Vector2>();
         }
+
+        // Tambahan: cek kalau player jatuh di bawah batas tertentu
+        if (transform.position.y < -10f)
+        {
+            // Player dianggap kena damage fatal karena jatuh
+            TakeDamage(currentHealth, Vector2.up); // langsung kurangi semua health biar respawn
+        }
     }
 
     private void FixedUpdate()
@@ -86,8 +93,17 @@ public class PlayerMovement : MonoBehaviour
         if (isKnockedBack) return;
 
         float totalInputX = moveInput.x + mobileInputX;
-        Vector2 targetVelocity = new Vector2(totalInputX * moveSpeed, rb.velocity.y);
-        rb.velocity = targetVelocity;
+
+        // Hanya update velocity jika benar-benar ada input ke kanan/kiri
+        if (Mathf.Abs(totalInputX) > 0.01f)
+        {
+            Vector2 targetVelocity = new Vector2(totalInputX * moveSpeed, rb.velocity.y);
+            rb.velocity = targetVelocity;
+        }
+        else
+        {
+            rb.velocity = new Vector2(0f, rb.velocity.y); // Tidak gerak horizontal
+        }
 
         UpdateAnimation(totalInputX);
 
@@ -97,40 +113,41 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+
     private void UpdateAnimation(float inputX)
     {
         MovementState state;
 
-        if (inputX > 0f)
+        // Cek apakah player benar-benar sedang bergerak horizontal
+        if (Mathf.Abs(rb.velocity.x) > 0.1f)
         {
             state = MovementState.walk;
-            sprite.flipX = false;
-        }
-        else if (inputX < 0f)
-        {
-            state = MovementState.walk;
-            sprite.flipX = true;
+            sprite.flipX = rb.velocity.x < 0;
         }
         else
         {
             state = MovementState.idle;
         }
 
+        // Kondisi vertikal (lompat ke atas)
         if (rb.velocity.y > 0.1f)
         {
             state = MovementState.jump;
         }
+        // Kondisi jatuh ke bawah dan belum menyentuh tanah
         else if (rb.velocity.y < -0.1f && !isGrounded())
         {
             state = MovementState.landing;
         }
-        else if (isGrounded() && Mathf.Abs(rb.velocity.y) < 0.01f && state != MovementState.walk)
+        // Tambahan: Jika sedang di udara dan bergerak (misal tekan D atau A), tetap animasi jump
+        else if (!isGrounded() && Mathf.Abs(inputX) > 0.1f)
         {
-            state = MovementState.landing;
+            state = MovementState.jump;
         }
 
         anim.SetInteger("state", (int)state);
     }
+
 
     private void Jump()
     {
@@ -173,7 +190,7 @@ public class PlayerMovement : MonoBehaviour
     private void UpdateHealthUI()
     {
         if (healthText != null)
-            healthText.text = "Health: " + currentHealth;
+            healthText.text = currentHealth.ToString();
     }
 
     public void TakeDamage(int damage, Vector2 direction)
@@ -207,4 +224,13 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = Vector2.zero;
         isKnockedBack = false;
     }
+
+    public void SetPlayerInput(bool aktif)
+    {
+        if (aktif)
+            playerController.Enable();
+        else
+            playerController.Disable();
+    }
+
 }
