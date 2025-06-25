@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class PoinController : MonoBehaviour
@@ -25,6 +25,12 @@ public class PoinController : MonoBehaviour
     {
         poin += jumlah;
         UpdateUI();
+
+        // 🔊 Mainkan suara menang jika semua koin terkumpul
+        if (SemuaKoinTerkumpul())
+        {
+            FindObjectOfType<PlayerMovement>()?.PlayVictorySound();
+        }
     }
 
     void UpdateUI()

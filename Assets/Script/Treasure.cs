@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Treasure : MonoBehaviour
 {
@@ -13,6 +13,9 @@ public class Treasure : MonoBehaviour
             {
                 winPanel.SetActive(true); // Tampilkan panel menang
                 Time.timeScale = 0f;      // Pause game
+
+                // 🔊 Mainkan suara kemenangan
+                other.GetComponent<PlayerMovement>()?.PlayVictorySound();
             }
             else
             {

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +12,9 @@ public class Coin : MonoBehaviour
         {
             // Tambah poin lewat PoinController
             PoinController.instance.TambahPoin(nilaiPoin);
+
+            // 🔊 Mainkan suara ambil koin
+            other.GetComponent<PlayerMovement>()?.PlayCoinSound();
 
             // Hancurkan koin setelah poin bertambah
             Destroy(gameObject);

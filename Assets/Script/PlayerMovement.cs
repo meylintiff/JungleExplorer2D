@@ -39,6 +39,14 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector3 startPosition;
 
+    [Header("Sound Effects")]
+    public AudioClip jumpSound;
+    public AudioClip hitSound;
+    public AudioClip fallSound;
+    public AudioClip coinSound;
+    public AudioClip winSound;
+    private AudioSource audioSource;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -52,6 +60,8 @@ public class PlayerMovement : MonoBehaviour
         UpdateHealthUI();
 
         startPosition = transform.position; // Simpan posisi awal player
+
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
@@ -83,7 +93,9 @@ public class PlayerMovement : MonoBehaviour
         // Tambahan: cek kalau player jatuh di bawah batas tertentu
         if (transform.position.y < -10f)
         {
-            // Player dianggap kena damage fatal karena jatuh
+            if (fallSound != null)
+                audioSource.PlayOneShot(fallSound);
+
             TakeDamage(currentHealth, Vector2.up); // langsung kurangi semua health biar respawn
         }
     }
@@ -112,7 +124,6 @@ public class PlayerMovement : MonoBehaviour
             isJumping = false;
         }
     }
-
 
     private void UpdateAnimation(float inputX)
     {
@@ -148,13 +159,15 @@ public class PlayerMovement : MonoBehaviour
         anim.SetInteger("state", (int)state);
     }
 
-
     private void Jump()
     {
         if (isGrounded())
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             isJumping = true;
+
+            if (jumpSound != null)
+                audioSource.PlayOneShot(jumpSound);
         }
     }
 
@@ -197,6 +210,9 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isKnockedBack) return;
 
+        if (hitSound != null)
+            audioSource.PlayOneShot(hitSound);
+
         currentHealth -= damage;
 
         if (currentHealth <= 0)
@@ -233,4 +249,16 @@ public class PlayerMovement : MonoBehaviour
             playerController.Disable();
     }
 
+    // Tambahan fungsi pemanggil suara lain (opsional)
+    public void PlayCoinSound()
+    {
+        if (coinSound != null)
+            audioSource.PlayOneShot(coinSound);
+    }
+
+    public void PlayVictorySound()
+    {
+        if (winSound != null)
+            audioSource.PlayOneShot(winSound);
+    }
 }
